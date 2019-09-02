@@ -25,7 +25,7 @@ namespace MyLeasing.Web.Data
             await CheckRoles();
             var manager = await CheckUserAsync("1010", "Henry", "Garcia", "henrygarcia0309@gmail.com", "305 360 8752", "Calle Luna Calle Sol", "Manager");
             var owner = await CheckUserAsync("2020", "Henry", "Garcia", "henrygarciaospina@gmail.com", "305 360 8752", "Calle Luna Calle Sol", "Owner");
-            var lessee = await CheckUserAsync("3030", "Henry", "Garcia", "henrygarcia0309@ghotmail.com", "305 360 8752", "Calle Luna Calle Sol", "Lessee");
+            var lessee = await CheckUserAsync("3030", "Henry", "Garcia", "henrygarcia0309@hotmail.com", "305 360 8752", "Calle Luna Calle Sol", "Lessee");
             await CheckPropertyTypesAsync();
             await CheckManagerAsync(manager);
             await CheckOwnersAsync(owner);
