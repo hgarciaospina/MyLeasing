@@ -125,7 +125,6 @@ namespace MyLeasing.Web.Controllers
             return null;
         }
 
-        // GET: Owners/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -133,47 +132,51 @@ namespace MyLeasing.Web.Controllers
                 return NotFound();
             }
 
-            var owner = await _dataContext.Owners.FindAsync(id);
+            var owner = await _dataContext.Owners
+                .Include(o => o.User)
+                .FirstOrDefaultAsync(o => o.Id == id.Value);
             if (owner == null)
             {
                 return NotFound();
             }
-            return View(owner);
+
+            var model = new EditUserViewModel
+            {
+                Address = owner.User.Address,
+                Document = owner.User.Document,
+                FirstName = owner.User.FirstName,
+                Id = owner.Id,
+                LastName = owner.User.LastName,
+                PhoneNumber = owner.User.PhoneNumber
+            };
+
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id")] Owner owner)
+        public async Task<IActionResult> Edit(EditUserViewModel model)
         {
-            if (id != owner.Id)
-            {
-                return NotFound();
-            }
-
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _dataContext.Update(owner);
-                    await _dataContext.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!OwnerExists(owner.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                var owner = await _dataContext.Owners
+                    .Include(o => o.User)
+                    .FirstOrDefaultAsync(o => o.Id == model.Id);
+
+                owner.User.Document = model.Document;
+                owner.User.FirstName = model.FirstName;
+                owner.User.LastName = model.LastName;
+                owner.User.Address = model.Address;
+                owner.User.PhoneNumber = model.PhoneNumber;
+
+                await _userHelper.UpdateUserAsync(owner.User);
                 return RedirectToAction(nameof(Index));
             }
-            return View(owner);
+
+            return View(model);
         }
 
-        // GET: Owners/Delete/5
+
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -182,25 +185,31 @@ namespace MyLeasing.Web.Controllers
             }
 
             var owner = await _dataContext.Owners
+                //Incluimos el User que vamos a borrar de la BD
+                .Include(o => o.User)
+                //Incluimos las Properties en caso que el Owners las tenga 
+                .Include(o => o.Properties)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (owner == null)
             {
                 return NotFound();
             }
 
-            return View(owner);
-        }
+            //Si el Owner tiene Properties registradas no se puede borrar, primero se  deben borrar las Properties
+            if (owner.Properties.Count != 0)
+            {
+                ModelState.AddModelError(string.Empty, "Owner can't be delete because it has proprties. ");
+                return RedirectToAction(nameof(Index));
+            }
 
-        // POST: Owners/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var owner = await _dataContext.Owners.FindAsync(id);
+            //Se borra primero el Owner
             _dataContext.Owners.Remove(owner);
             await _dataContext.SaveChangesAsync();
+            //Luego Se borra primero el User
+            await _userHelper.DeleteUserAsync(owner.User.Email);
             return RedirectToAction(nameof(Index));
         }
+
 
         private bool OwnerExists(int id)
         {
@@ -473,20 +482,20 @@ namespace MyLeasing.Web.Controllers
         }
 
 
-        private IEnumerable<SelectListItem> GetComboPropertyTypes()
-        {
-            var list = _dataContext.PropertyTypes.Select(p => new SelectListItem
-            {
-                Text = p.Name,
-                Value = p.Id.ToString()
-            }).OrderBy(p => p.Text).ToList();
-            list.Insert(0, new SelectListItem
-            {
-                Text = "(Select a property type...)",
-                Value = "0"
-            });
-            return list;
-        }
+        //private IEnumerable<SelectListItem> GetComboPropertyTypes()
+        //{
+        //    var list = _dataContext.PropertyTypes.Select(p => new SelectListItem
+        //    {
+        //        Text = p.Name,
+        //        Value = p.Id.ToString()
+        //    }).OrderBy(p => p.Text).ToList();
+        //    list.Insert(0, new SelectListItem
+        //    {
+        //        Text = "(Select a property type...)",
+        //        Value = "0"
+        //    });
+        //    return list;
+        //}
 
     }
 }
