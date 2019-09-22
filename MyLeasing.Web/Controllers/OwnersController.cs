@@ -252,6 +252,8 @@ namespace MyLeasing.Web.Controllers
                 return RedirectToAction($"Details/{model.OwnerId}");
             }
 
+            /* Se debe llenar el model  con los datos del combo para que no llegue nulo */
+            model.PropertyTypes = _combosHelper.GetComboPropertyTypes();
             return View(model);
         }
 
@@ -400,6 +402,9 @@ namespace MyLeasing.Web.Controllers
                 return RedirectToAction($"{nameof(DetailsProperty)}/{model.PropertyId}");
             }
 
+            /* Se debe llenar el model  con los datos del combo para que no llegue nulo */
+            model.Lessees = _combosHelper.GetComboLessees();
+
             return View(model);
         }
 
@@ -511,21 +516,6 @@ namespace MyLeasing.Web.Controllers
             await _dataContext.SaveChangesAsync();
             return RedirectToAction($"{nameof(Details)}/{property.Owner.Id}");
         }
-
-        //private IEnumerable<SelectListItem> GetComboPropertyTypes()
-        //{
-        //    var list = _dataContext.PropertyTypes.Select(p => new SelectListItem
-        //    {
-        //        Text = p.Name,
-        //        Value = p.Id.ToString()
-        //    }).OrderBy(p => p.Text).ToList();
-        //    list.Insert(0, new SelectListItem
-        //    {
-        //        Text = "(Select a property type...)",
-        //        Value = "0"
-        //    });
-        //    return list;
-        //}
 
     }
 }
